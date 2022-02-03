@@ -1,5 +1,5 @@
-const Migrations = artifacts.require("Migrations");
+const DPMIRegistry = artifacts.require("DPMIRegistry");
 
 module.exports = function (deployer) {
-  deployer.deploy(Migrations);
+  deployer.deploy(DPMIRegistry);
 };

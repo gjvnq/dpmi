@@ -1,0 +1,1 @@
+Use ```truffle deploy --reset``` when chaning contract code.
