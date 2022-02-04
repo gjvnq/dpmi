@@ -47,11 +47,11 @@ module.exports = {
      network_id: "*",       // Any network (default: none)
     },
     testnet: {
-      provider: () => new HDWalletProvider(mnemonic, `https://rpc-mumbai.maticvigil.com`),
+      provider: () => new HDWalletProvider(mnemonic, `https://matic-mumbai.chainstacklabs.com`),
       network_id: 80001,
       confirmations: 2,
-      timeoutBlocks: 200,
-      skipDryRun: true
+      timeoutBlocks: 2000,
+      skipDryRun: true,
     }
     // Another network with more advanced options...
     // advanced: {

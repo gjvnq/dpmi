@@ -30,7 +30,7 @@
       <h4>Dublin Core</h4>
       <localized-input label="Title" v-model="dcTitle"  :disabled="disabled"/>
 
-      <button type="submit" class="btn btn-primary" @click.prevent="deploy" :disabled="disabled">Deploy contract</button>
+      <button type="submit" class="btn btn-primary" @click.prevent="mint" :disabled="disabled">Mint token</button>
     </form>
   </div>
 </template>
@@ -40,7 +40,7 @@ import { AppConfig } from "../config";
 import { defineComponent, Ref } from 'vue';
 import { UserModel } from "../models/User";
 import { userModule } from "../store/user";
-import { makeParamsContract, uuid2uint128 } from "../utils";
+import { makeParamsContract, uuid2uint128, mintToken } from "../utils";
 import { Moralis } from "moralis/types";
 import UuidInput from "../components/UuidInput.vue";
 
@@ -70,21 +70,22 @@ export default defineComponent({
     },
   },
   methods: {
-    async deploy() {
+    async mint() {
       try {
         this.disabled = true;
-        console.log(this.tokenId);
         const final_path = "/token/"+this.tokenUuid;
-        console.log(final_path);
-        const params = makeParamsContract("safeMint", {
-          to: this.user.get('ethAddress'),
-          tokenId: this.tokenId,
-          uri: "example.com",
-        });
-        const transaction = await this.$moralis.executeFunction(params) as Moralis.ExecuteFunctionCallResult;
-        console.log(transaction);
-        const result = await transaction.wait();
-        console.log(result);
+        // console.log(this.tokenId);
+        // console.log(final_path);
+        // const params = makeParamsContract("safeMint", {
+        //   to: this.user.get('ethAddress'),
+        //   tokenId: this.tokenId,
+        //   uri: "example.com",
+        // });
+        // const transaction = await this.$moralis.executeFunction(params) as Moralis.ExecuteFunctionCallResult;
+        // console.log(transaction);
+        // const result = await transaction.wait();
+        // console.log(result);
+        await mintToken(this.user.get('ethAddress'), this.tokenUuid, "example.com", this.$moralis);
         // redirect to propper page
         window.location.pathname = final_path;
       } finally {

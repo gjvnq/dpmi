@@ -75,7 +75,7 @@ import { AppConfig } from "../config";
 import { defineComponent, Ref } from 'vue';
 import { UserModel } from "../models/User";
 import { userModule } from "../store/user";
-import { makeParamsContract, uuid2uint128, getTokenOwner, addCitation } from "../utils";
+import { makeParamsContract, uuid2uint128, getTokenOwner, addCitation, getCites, getCitedBy } from "../utils";
 import { Moralis } from "moralis/types";
 import UuidInput from "../components/UuidInput.vue";
 
@@ -90,8 +90,8 @@ export default defineComponent({
       newCitesUuid: "" as string,
       newCitedByUuid: "" as string,
       dcTitle: [],
-      cites: [],
-      citedBy: [],
+      cites: [] as Array<string>,
+      citedBy: [] as Array<string>,
     }
   },
   computed: {
@@ -106,21 +106,22 @@ export default defineComponent({
     await this.fetchData(tokenUuid);
   },
   async mounted() {
-    console.log(this.$route.params);
     const tokenUuid = this.$route.params.uuid as string;
+    await this.$moralis.enableWeb3();
     await this.fetchData(tokenUuid);
   },
   methods: {
     async fetchData(tokenUuid: string) {
       this.tokenUuid = tokenUuid;
-      this.owner = await getTokenOwner(tokenUuid);
+      this.owner = await getTokenOwner(tokenUuid, this.$moralis);
       // this.operators = await getTokenOperators(tokenUuid);
+      this.cites = await getCites(tokenUuid, this.$moralis);
+      this.citedBy = await getCitedBy(tokenUuid, this.$moralis);
     },
     async addCites() {
       try {
         this.disabled = true;
-        console.log("addCites", this.newCitesUuid);
-        await addCitation(this.tokenUuid, this.newCitesUuid);
+        await addCitation(this.tokenUuid, this.newCitesUuid, this.$moralis);
       } finally {
         this.disabled = false;
       }
@@ -128,7 +129,7 @@ export default defineComponent({
     async addCitedBy() {
       try {
         this.disabled = true;
-        await addCitation(this.newCitedByUuid, this.tokenUuid);
+        await addCitation(this.newCitedByUuid, this.tokenUuid, this.$moralis);
       } finally {
         this.disabled = false;
       }
