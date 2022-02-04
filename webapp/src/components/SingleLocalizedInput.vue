@@ -2,29 +2,34 @@
   <div class="input-group single-localized-input">
     <input
       type="text"
-      class="form-control"
+      :class="{'form-control': !readonly, 'form-control-plaintext': readonly}"
       placeholder="Value"
       aria-label="inputVal"
+      :readonly="readonly"
       :disabled="disabled"
-      :value="base"
+      :value="val.base"
       @input="updatedBase"
     />
-    <span class="input-group-text"> in </span>
+    <span
+      :class="{'input-group-text': !readonly, 'input-group-plaintext': readonly}"
+    > in </span>
     <input
       type="text"
-      class="form-control"
+      :class="{'form-control': !readonly, 'form-control-plaintext': readonly}"
       placeholder="Language"
       aria-label="Language"
       list="languages"
       id="inputLang"
+      :readonly="readonly"
       :disabled="disabled"
-      :value="lang"
+      :value="val.lang"
       @input="updatedLang"
     />
     <button
       class="btn btn-outline-secondary"
       type="button"
-      :disabled="disabled"
+      v-if="!readonly"
+      :disabled="disabled || readonly"
       @click="$emit('addLine')"
     >
       +
@@ -40,6 +45,7 @@ export default defineComponent({
   name: "single-localized-input",
   props: {
     disabled: Boolean,
+    readonly: Boolean,
     modelValue: {
       type: Object as PropType<LocalizedString>,
       default(this: void): LocalizedString {

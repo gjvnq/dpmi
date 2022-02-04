@@ -2,6 +2,7 @@ import { createRouter, createWebHistory, RouteRecordRaw } from "vue-router";
 import TransactionList from "../views/TransactionList.vue";
 import DeployContract from "../views/DeployContract.vue";
 import Minting from "../views/Minting.vue";
+import TokenView from "../views/TokenView.vue";
 import Login from "../views/Login.vue";
 import ProtectedPages from "../components/ProtectedPages.vue";
 import RouterGuard from "./router.guard";
@@ -33,6 +34,11 @@ const routes: Array<RouteRecordRaw> = [
         path: "/mint",
         name: "Minting",
         component: Minting,
+      },
+      {
+        path: "/token/:uuid",
+        name: "Token",
+        component: TokenView,
       },
     ],
   },

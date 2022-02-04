@@ -2,6 +2,7 @@ import { AppConfig } from "./config";
 import ABI from "./assets/DPMIRegistry.abi.json";
 import MoralisType from "moralis";
 import { parse as uuidParse } from 'uuid';
+import MoralisConfig from "./config/moralis";
 
 console.log(MoralisType);
 
@@ -67,7 +68,30 @@ export function makeParamsContract(
   };
 }
 
-
 export function uuid2uint128(uuid_input: string): ArrayLike<number> {
   return uuidParse(uuid_input)
+}
+
+export async function getTokenOwner(tokenId: string): Promise<string> {
+  await MoralisConfig.enableWeb3();
+
+  const params = makeParamsContract("ownerOf", {
+    tokenId: uuid2uint128(tokenId)
+  });
+  const result = await MoralisConfig.executeFunction(params) as Moralis.ExecuteFunctionCallResult;
+  return result as unknown as string;
+}
+
+export async function addCitation(from: string, to: string): Promise<boolean> {
+  await MoralisConfig.enableWeb3();
+
+  const params = makeParamsContract("addCitation", {
+    from: uuid2uint128(from),
+    to: uuid2uint128(to),
+  });
+
+  const transaction = await MoralisConfig.executeFunction(params) as Moralis.ExecuteFunctionCallResult;
+  console.log(transaction);
+  const result = await transaction.wait();
+  return true;
 }

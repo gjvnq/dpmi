@@ -8,6 +8,7 @@
             v-model="lines[i]"
             @addLine="addLine"
             @change="update"
+            :readonly="readonly"
             :disabled="disabled"
           />
         </template>
@@ -33,6 +34,7 @@ export default defineComponent({
   name: "localized-input",
   props: {
     disabled: Boolean,
+    readonly: Boolean,
     label: {
       type: String,
       default(this: void) {
