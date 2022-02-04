@@ -5,6 +5,7 @@
       class="form-control"
       placeholder="Value"
       aria-label="inputVal"
+      :disabled="disabled"
       :value="base"
       @input="updatedBase"
     />
@@ -16,12 +17,14 @@
       aria-label="Language"
       list="languages"
       id="inputLang"
+      :disabled="disabled"
       :value="lang"
       @input="updatedLang"
     />
     <button
       class="btn btn-outline-secondary"
       type="button"
+      :disabled="disabled"
       @click="$emit('addLine')"
     >
       +
@@ -30,27 +33,36 @@
 </template>
 
 <script lang="ts">
-import { defineComponent } from "vue";
+import { defineComponent, PropType } from "vue";
+import { LocalizedString, newLocalizedString } from "../utils";
 
 export default defineComponent({
   name: "single-localized-input",
-  props: ["modelValue"],
+  props: {
+    disabled: Boolean,
+    modelValue: {
+      type: Object as PropType<LocalizedString>,
+      default(this: void): LocalizedString {
+        return newLocalizedString("", "");
+      },
+    },
+  },
   data() {
-    return { base: this.modelValue.base, lang: this.modelValue.lang };
+    return {val: this.modelValue as LocalizedString };
   },
   methods: {
     updatedBase(event: Event) {
       const target = event.target as HTMLInputElement;
-      this.base = target.value;
+      this.val.base = target.value;
       this.updatedModel();
     },
     updatedLang(event: Event) {
       const target = event.target as HTMLInputElement;
-      this.lang = target.value;
+      this.val.lang = target.value;
       this.updatedModel();
     },
     updatedModel() {
-      this.$emit("update:modelValue", { base: this.base, lang: this.lang });
+      this.$emit("update:modelValue", this.val);
     },
   },
 });

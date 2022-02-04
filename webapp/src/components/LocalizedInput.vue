@@ -8,6 +8,7 @@
             v-model="lines[i]"
             @addLine="addLine"
             @change="update"
+            :disabled="disabled"
           />
         </template>
       </div>
@@ -31,6 +32,7 @@ import { LocalizedString, newLocalizedString } from "../utils";
 export default defineComponent({
   name: "localized-input",
   props: {
+    disabled: Boolean,
     label: {
       type: String,
       default(this: void) {

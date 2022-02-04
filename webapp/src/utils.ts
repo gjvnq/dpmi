@@ -1,6 +1,7 @@
 import { AppConfig } from "./config";
 import ABI from "./assets/DPMIRegistry.abi.json";
 import MoralisType from "moralis";
+import { parse as uuidParse } from 'uuid';
 
 console.log(MoralisType);
 
@@ -13,7 +14,7 @@ export type ApiParams = components["schemas"]["RunContractDto"]["params"];
 
 import { Moralis } from "moralis/types";
 
-export interface LocalizedString {
+export type LocalizedString = {
   base: string;
   lang: string;
 }
@@ -67,3 +68,6 @@ export function makeParamsContract(
 }
 
 
+export function uuid2uint128(uuid_input: string): ArrayLike<number> {
+  return uuidParse(uuid_input)
+}
