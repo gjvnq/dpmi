@@ -1,7 +1,7 @@
 <template>
   <div>
     <div class="row mb-3">
-      <label for="inputVal" class="col-sm-2 col-form-label">Title</label>
+      <label class="col-sm-2 col-form-label">{{ label }}</label>
       <div class="col-sm-10">
         <template v-for="(line, i) in lines" :key="i">
           <single-localized-input
@@ -31,11 +31,14 @@ import { LocalizedString, newLocalizedString } from "../utils";
 export default defineComponent({
   name: "localized-input",
   props: {
+    label: {
+      type: String,
+      default(this: void) {
+        return "Label"
+      },
+    },
     modelValue: {
       type: Array,
-      validator(this: void, value: Array<LocalizedString>): boolean {
-        return value.length > 0;
-      },
       default(this: void): Array<LocalizedString> {
         return [newLocalizedString("", "")];
       },
@@ -44,10 +47,13 @@ export default defineComponent({
   data() {
     return { lines: this.modelValue as Array<LocalizedString> };
   },
+  created() {
+    if (this.lines.length == 0) {
+      this.addLine();
+    }
+  },
   methods: {
     addLine() {
-      console.log(this);
-      console.log(this.lines);
       this.lines.push(newLocalizedString("", ""));
       this.update();
     },

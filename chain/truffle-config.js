@@ -100,6 +100,14 @@ module.exports = {
     }
   },
 
+  build: function(options, callback) {
+    const input_filepath = options.destination_directory+'/contracts/DPMIRegistry.json';
+    const output_filepath = options.destination_directory+'/DPMIRegistry.abi.json';
+    const contract = JSON.parse(fs.readFileSync(input_filepath, 'utf8'));
+    const data = JSON.stringify(contract.abi);
+    fs.writeFileSync(output_filepath, data, 'utf8', callback);
+  },
+
   // Truffle DB is currently disabled by default; to enable it, change enabled:
   // false to enabled: true. The default storage location can also be
   // overridden by specifying the adapter settings, as shown in the commented code below.
