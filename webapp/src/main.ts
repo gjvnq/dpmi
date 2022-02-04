@@ -1,5 +1,6 @@
 import { createApp } from "vue";
 import App from "./App.vue";
+import Components from './components'
 import * as dotenv from "dotenv";
 import MoralisConfig from "./config/moralis";
 import router from "./router";
@@ -14,6 +15,8 @@ const web3 = new Web3();
 
 app.config.globalProperties.$moralis = MoralisConfig;
 app.config.globalProperties.$web3 = web3;
+
+Components.register(app);
 
 app.use(router);
 app.mount("#app");

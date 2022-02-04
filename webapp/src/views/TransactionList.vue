@@ -1,10 +1,5 @@
 <template>
   <div class="container p-3">
-    <button class="btn btn-danger float-end" @click.prevent="logout">
-      Logout
-    </button>
-    <h3>Logged In as {{ user.id }}</h3>
-
     <div class="card mt-5">
       <div class="card-header">
         <h6>Transactions</h6>
@@ -42,7 +37,7 @@ import { UserModel } from "../models/User";
 import { userModule } from "../store/user";
 
 @Options({})
-export default class Home extends Vue {
+export default class TransactionList extends Vue {
   transactions: Moralis.TransactionResult[] = [];
   get user(): UserModel {
     return userModule.user as UserModel;
@@ -65,11 +60,6 @@ export default class Home extends Vue {
 
   fromWei(value: string): number {
     return this.$moralis.Units.FromWei(value, 18);
-  }
-
-  async logout(): Promise<void> {
-    await this.$moralis.User.logOut();
-    this.$router.push({ name: "Login" });
   }
 }
 </script>

@@ -1,5 +1,7 @@
 import { createRouter, createWebHistory, RouteRecordRaw } from "vue-router";
-import Home from "../views/Home.vue";
+import TransactionList from "../views/TransactionList.vue";
+import DeployContract from "../views/DeployContract.vue";
+import Minting from "../views/Minting.vue";
 import Login from "../views/Login.vue";
 import ProtectedPages from "../components/ProtectedPages.vue";
 import RouterGuard from "./router.guard";
@@ -19,8 +21,18 @@ const routes: Array<RouteRecordRaw> = [
     children: [
       {
         path: "/",
-        name: "Home",
-        component: Home,
+        name: "TransactionList",
+        component: TransactionList,
+      },
+      {
+        path: "/deploy",
+        name: "DeployContract",
+        component: DeployContract,
+      },
+      {
+        path: "/mint",
+        name: "Minting",
+        component: Minting,
       },
     ],
   },
