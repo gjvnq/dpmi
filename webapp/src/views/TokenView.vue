@@ -190,8 +190,7 @@ export default defineComponent({
     async fetchData(tokenUuid: string) {
       try {
         this.processingChange = true;
-        this.registration = await DPMIRegistration.load_or_new(tokenUuid, this.userEthAddress, this.$moralis);
-        await this.registration.load_metadata();
+        this.registration = await DPMIRegistration.load_or_new(tokenUuid, this.userEthAddress, true, this.$moralis);
         const old = this.registration;
         this.registration = old;
         this.regmd_ok = true;

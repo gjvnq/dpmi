@@ -9,22 +9,21 @@
           <table class="table table-striped">
             <thead>
               <tr>
-                <th>Tx Hash</th>
-                <th>From Address</th>
-                <th>To Address</th>
-                <th>Value</th>
+                <th>UUID</th>
+                <th>Title</th>
+                <th></th>
               </tr>
             </thead>
-            <!-- <tbody>
-              <tr v-for="transaction in transactions" :key="transaction.hash">
-                <td>{{ transaction.hash }}</td>
-                <td>{{ transaction.from_address }}</td>
-                <td>{{ transaction.to_address }}</td>
-                <td>{{ transaction.value }}</td>
+            <tbody>
+              <tr v-for="registration in registrations" :key="registration.hash">
+                <td>{{ registration.uuid }}</td>
+                <td>{{ (registration.metadata.dcTitle[0] || {base: ""}).base }}</td>
+                <td><a :href="'/token/'+registration.uuid">Edit</a></td>
               </tr>
-            </tbody> -->
+            </tbody>
           </table>
         </div>
+        <p style="text-align: center"><a href="/token/new">New registration</a></p>
       </div>
     </div>
   </div>
@@ -35,16 +34,29 @@ import Moralis from "moralis/types";
 import { Options, Vue } from "vue-class-component";
 import { UserModel } from "../models/User";
 import { userModule } from "../store/user";
+import { DPMIRegistration } from "../models/DPMIRegistration";
 
 @Options({})
 export default class HomePage extends Vue {
+  registrations: Array<DPMIRegistration> = [];
+
   get user(): UserModel {
     return userModule.user as UserModel;
   }
 
-  // created(): void {
-  //   this.fetchTransactions();
-  // }
+  get userEthAddress(): string {
+    return this.user.get('ethAddress');
+  }
+
+  async created() {
+    await this.$moralis.enableWeb3();
+    await this.fetchData();
+  }
+
+  async fetchData(): Promise<void> {
+    console.log(this.userEthAddress);
+    this.registrations = await DPMIRegistration.load_by_owner(this.userEthAddress, true, this.$moralis);
+  }
 
   // async fetchTransactions(): Promise<void> {
   //   const transactions: Moralis.TransactionResult[] = (

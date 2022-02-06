@@ -138,15 +138,14 @@ export class DPMIRegistration {
     return tokenId;
   }
 
-  static async load_or_new(uuid: string, owner: string, moralis: typeof MoralisConfig) {
+  static async load_or_new(uuid: string, owner: string, include_metadata: boolean, moralis: typeof MoralisConfig) {
     if (uuid == "new") {
       return Promise.resolve(new DPMIRegistration(NullTokenId, owner, "", [], []));
     }
-    return await DPMIRegistration.load(uuid, moralis);
+    return await DPMIRegistration.load_by_uuid(uuid, include_metadata, moralis);
   }
 
-  static async load(uuid: string, moralis: typeof MoralisConfig) {
-    const tokenId = TokenId.parse(uuid);
+  static async load(tokenId: TokenId, include_metadata: boolean, moralis: typeof MoralisConfig): Promise<DPMIRegistration> {
     const p_owner = runAnyContractFunction(moralis, "ownerOf", {tokenId: tokenId.wire}) as Promise<string>;
     const p_metadata_url = runAnyContractFunction(moralis, "tokenURI", {tokenId: tokenId.wire}) as Promise<string>;
     const p_fwd_citations = runAnyContractFunction(moralis, "getCites", {tokenId: tokenId.wire}) as Promise<Array<BigNumber>>;
@@ -154,7 +153,45 @@ export class DPMIRegistration {
     const [owner, metadata_url, fwd_citations_raw, rev_citations_raw] = [await p_owner, await p_metadata_url, await p_fwd_citations, await p_rev_citations];
     const fwd_citations = fwd_citations_raw.map((val) => TokenId.from_bn(val));
     const rev_citations = rev_citations_raw.map((val) => TokenId.from_bn(val));
-    return new DPMIRegistration(tokenId,  owner,  metadata_url,  fwd_citations,  rev_citations);
+
+    const ans = new DPMIRegistration(tokenId,  owner,  metadata_url,  fwd_citations,  rev_citations);
+    if (include_metadata) {
+      try {
+        await ans.load_metadata();
+      } catch (e) {
+        console.log(e);
+      }
+    }
+    return ans;
+  }
+
+  static async load_by_uuid(uuid: string, include_metadata: boolean, moralis: typeof MoralisConfig): Promise<DPMIRegistration> {
+    const tokenId = TokenId.parse(uuid);
+    return await DPMIRegistration.load(tokenId, include_metadata, moralis);
+  }
+
+  static async load_by_owner_and_index(owner: string, index: number, include_metadata: boolean, moralis: typeof MoralisConfig): Promise<DPMIRegistration> {
+    const transaction = await runContractFunctionPromise(moralis, "tokenOfOwnerByIndex", {
+        owner: owner,
+        index: index
+      }) as Moralis.ExecuteFunctionCallResult;
+    const tokenId = TokenId.from_bn(transaction as unknown as BigNumber);
+    return await DPMIRegistration.load(tokenId, include_metadata, moralis);
+  }
+
+  static async load_by_owner(owner: string, include_metadata: boolean, moralis: typeof MoralisConfig): Promise<Array<DPMIRegistration>> {
+    const transaction = await runContractFunctionPromise(moralis, "balanceOf", {
+        owner: owner,
+      }) as Moralis.ExecuteFunctionCallResult;
+    console.log("transaction", transaction);
+    const totalRegistrations = (transaction as unknown as BigNumber).toNumber();
+    const promises = [];
+    const promises2 = [];
+    for (let i = 0; i < totalRegistrations; i += 1) {
+      promises.push(DPMIRegistration.load_by_owner_and_index(owner, i, include_metadata, moralis));
+    }
+    console.log("promises", promises);
+    return Promise.all(promises);
   }
 
   async load_metadata(): Promise<DPMIMetadata> {
