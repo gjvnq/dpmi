@@ -82,6 +82,10 @@ contract DPMIRegistry is
     _setTokenURI(tokenId, uri);
   }
 
+  function withdrawEth(address payable to) public payable onlyOwner {
+    to.transfer(address(this).balance);
+  }
+
   mapping(uint256 => uint256[]) private tokenCites;
   mapping(uint256 => uint256[]) private tokenCitedBy;
 

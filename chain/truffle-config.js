@@ -34,6 +34,7 @@ module.exports = {
    * $ truffle test --network <network-name>
    */
   plugins: [
+    // Run: truffle run stdjsonin DPMIRegistry DPMIRegistryRandom
     'truffle-plugin-stdjsonin'
   ],
   networks: {
@@ -49,10 +50,11 @@ module.exports = {
      network_id: "*",       // Any network (default: none)
     },
     testnet: {
-      provider: () => new HDWalletProvider(mnemonic, `https://matic-mumbai.chainstacklabs.com`),
+      provider: () => new HDWalletProvider(mnemonic, `https://speedy-nodes-nyc.moralis.io/cdba222f42235a18011a6921/polygon/mumbai`),
       network_id: 80001,
       confirmations: 2,
       timeoutBlocks: 2000,
+      networkCheckTimeout: 3000,
       skipDryRun: true,
     }
     // Another network with more advanced options...
@@ -103,11 +105,16 @@ module.exports = {
   },
 
   build: function(options, callback) {
-    const input_filepath = options.destination_directory+'/contracts/DPMIRegistry.json';
-    const output_filepath = options.destination_directory+'/DPMIRegistry.abi.json';
-    const contract = JSON.parse(fs.readFileSync(input_filepath, 'utf8'));
-    const data = JSON.stringify(contract.abi);
-    fs.writeFileSync(output_filepath, data, 'utf8', callback);
+    function singleContract(contract_name) {
+      const input_filepath = options.destination_directory+'/contracts/'+contract_name+'.json';
+      const output_filepath = options.destination_directory+'/'+contract_name+'.abi.json';
+      const contract = JSON.parse(fs.readFileSync(input_filepath, 'utf8'));
+      const data = JSON.stringify(contract.abi);
+      fs.writeFileSync(output_filepath, data, 'utf8');
+    }
+
+    singleContract('DPMIRegistry');
+    singleContract('DPMIRegistryRandom');
   },
 
   // Truffle DB is currently disabled by default; to enable it, change enabled:
