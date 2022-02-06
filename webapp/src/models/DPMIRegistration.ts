@@ -138,6 +138,13 @@ export class DPMIRegistration {
     return tokenId;
   }
 
+  static async load_or_new(uuid: string, owner: string, moralis: typeof MoralisConfig) {
+    if (uuid == "new") {
+      return Promise.resolve(new DPMIRegistration(NullTokenId, owner, "", [], []));
+    }
+    return await DPMIRegistration.load(uuid, moralis);
+  }
+
   static async load(uuid: string, moralis: typeof MoralisConfig) {
     const tokenId = TokenId.parse(uuid);
     const p_owner = runAnyContractFunction(moralis, "ownerOf", {tokenId: tokenId.wire}) as Promise<string>;
@@ -161,18 +168,55 @@ export class DPMIRegistration {
   }
 
   async save_metadata(moralis: typeof MoralisConfig): Promise<string> {
+    if (this.id == NullTokenId) {
+      throw "Can't do this to an unmint token";
+    }
+
+    const isNew = this.id.bytes == NullTokenId.bytes;
+    console.log("save_metadata:isNew", isNew);
+    console.log("save_metadata:isNew", this.id, NullTokenId);
+    console.log("save_metadata:isNew", this.id.bytes, NullTokenId.bytes);
+    console.log("save_metadata:isNew", this.id.toString(), NullTokenId.toString());
+    if (isNew) {
+      this._id = TokenId.parse(uuidv4());
+    }
+    console.log("save_metadata", this._id);
+    console.log("save_metadata", this.uuid);
+
     const filename = this.uuid+".json";
+    console.log("save_metadata", filename);
     console.log("save_metadata", this.metadata);
     const filedata = btoa(DPMIMetadata.toJSON(this.metadata));
+    console.log("save_metadata", filedata);
     const file = new moralis.File(filename, {base64 : filedata});
+    console.log("save_metadata", file);
     await file.saveIPFS();
     const new_metadata_url = file.url();
+    console.log("save_metadata", new_metadata_url);
 
-    const transaction = await runAnyContractFunction(moralis, "setTokenURI", {tokenId: this.id.wire, uri: new_metadata_url}) as Moralis.ExecuteFunctionCallResult;
-    transaction.wait(1);
+    let transaction;
+    if (isNew) {
+      transaction = await runContractFunctionPromise(moralis, "safeMint", {
+        to: this._owner,
+        tokenId: this._id.wire,
+        uri: new_metadata_url,
+      }) as Moralis.ExecuteFunctionCallResult;
+    } else {
+      transaction = await runAnyContractFunction(moralis, "setTokenURI", {tokenId: this.id.wire, uri: new_metadata_url}) as Moralis.ExecuteFunctionCallResult;
+    }
+    await transaction.wait();
 
     this._metadata_url = new_metadata_url;
     return this.metadata_url;
+  }
+
+  async addCitation(to: string, moralis: typeof MoralisConfig): Promise<boolean> {
+    const toToken = TokenId.parse(to);
+
+    const transaction = await runAnyContractFunction(moralis, "addCitation", {fromToken: this.id.wire, toToken: toToken.wire}) as Moralis.ExecuteFunctionCallResult;
+    console.log("addCitation->transaction", transaction);
+    this._fwd_citations.push(toToken);
+    return true;
   }
 }
 

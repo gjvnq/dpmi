@@ -1,8 +1,9 @@
 <template>
   <div class="container">
     <form action="#">
-      <h3>DPMI Record</h3>
-      <div class="row mb-3">
+      <h3 v-if="isNew">New DPMI Record</h3>
+      <h3 v-if="!isNew">DPMI Record</h3>
+      <div class="row mb-3" v-if="!isNew">
         <label for="tokenUuid" class="col-sm-2 col-form-label">UUID</label>
         <div class="col-sm-10">
           <input type="text" readonly class="form-control-plaintext" id="tokenUuid" v-bind:value="registration.uuid">
@@ -14,7 +15,7 @@
           <input type="text" readonly class="form-control-plaintext" id="tokenOwner" v-bind:value="registration.owner">
         </div>
       </div>
-      <div class="row mb-3">
+      <div class="row mb-3" v-if="!isNew">
         <label for="tokenURI" class="col-sm-2 col-form-label">Token URI (for metadata)</label>
         <div class="col-sm-10">
           <textarea readonly class="form-control-plaintext" id="tokenURI" v-model="registration.metadata_url"></textarea>
@@ -85,11 +86,11 @@
         <span class="col-sm-2"></span>
         <div class="col-sm-10">
           <div class="input-group">
-            <input type="text" class="form-control" id="newCite" placeholder="DPMI of the cited work" v-model="newCitesUuid">
+            <input type="text" class="form-control" id="newCite" placeholder="DPMI of the cited work" v-model="newCitesUuid" :disabled="disabled || isNew">
             <button
               class="btn btn-outline-secondary"
               type="button"
-              :disabled="disabled"
+              :disabled="disabled || isNew"
               @click="addCites"
             >
               Add citation
@@ -105,22 +106,6 @@
             <li><a :href="'/token/'+addr">{{addr}}</a></li>
           </template>
         </ul>
-      </div>
-      <div class="row mb-3" v-if="canEdit">
-        <span class="col-sm-2"></span>
-        <div class="col-sm-10">
-          <div class="input-group">
-            <input type="text" class="form-control" id="newCitedBy" placeholder="DPMI of the citing work" v-model="newCitedByUuid">
-            <button
-              class="btn btn-outline-secondary"
-              type="button"
-              :disabled="disabled"
-              @click="addCitedBy"
-            >
-              Add citing work
-            </button>
-          </div>
-        </div>
       </div>
     </form>
   </div>
@@ -145,7 +130,6 @@ export default defineComponent({
       registration: NullDPMIRegistration,
       processingChange: false,
       newCitesUuid: "" as string,
-      newCitedByUuid: "" as string,
     }
   },
   computed: {
@@ -167,10 +151,13 @@ export default defineComponent({
       return this.isOwner || this.isOperator;
     },
     isOwner(): boolean {
-      return this.registration.owner.toLowerCase() == this.userEthAddress;
+      return this.isNew || this.registration.owner.toLowerCase() == this.userEthAddress;
     },
     isOperator(): boolean {
       return false;
+    },
+    isNew(): boolean {
+      return this.$route.params.uuid == "new";
     },
     user(): UserModel {
       return userModule.user as UserModel;
@@ -198,7 +185,7 @@ export default defineComponent({
     async fetchData(tokenUuid: string) {
       try {
         this.processingChange = true;
-        this.registration = await DPMIRegistration.load(tokenUuid, this.$moralis);
+        this.registration = await DPMIRegistration.load_or_new(tokenUuid, this.userEthAddress, this.$moralis);
         await this.registration.load_metadata();
         const old = this.registration;
         this.registration = old;
@@ -210,15 +197,8 @@ export default defineComponent({
     async addCites() {
       try {
         this.processingChange = true;
-        await addCitation(this.registration.uuid, this.newCitesUuid, this.$moralis);
-      } finally {
-        this.processingChange = false;
-      }
-    },
-    async addCitedBy() {
-      try {
-        this.processingChange = true;
-        await addCitation(this.newCitedByUuid, this.registration.uuid, this.$moralis);
+        await this.registration.addCitation(this.newCitesUuid.trim(), this.$moralis);
+        this.newCitesUuid = "";
       } finally {
         this.processingChange = false;
       }
@@ -229,6 +209,12 @@ export default defineComponent({
         console.log(this.regmd);
         await this.registration.save_metadata(this.$moralis);
         alert("Saved new metadata");
+
+        if (this.isNew) {
+          const final_path = "/token/"+this.registration.uuid;
+          console.log("Redirecting to", final_path);
+          window.location.pathname = final_path;
+        }
       } finally {
         this.processingChange = false;
       }
