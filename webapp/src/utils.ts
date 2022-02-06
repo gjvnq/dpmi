@@ -1,38 +1,38 @@
 import { AppConfig } from "./config";
 import ABI from "./assets/DPMIRegistry.abi.json";
 import { parse as uuidParse, stringify as uuidStringify, NIL as NIL_UUID } from 'uuid';
-// import { BigNumber } from "moralis";
-import { BigNumber, FixedNumber } from "@ethersproject/bignumber";
+import { BigNumber } from "@ethersproject/bignumber";
 import MoralisConfig from "./config/moralis";
 
-import { components } from "moralis/types/generated/web3Api";
+import { Moralis as MoralisTypes } from "moralis/types";
 import { AbiItem } from "web3-utils/types";
-export type ApiChain = components["schemas"]["chainList"];
+import { components as web3Api_components } from "moralis/types/generated/web3Api";
+import { operations as web3Api_operations } from "moralis/types/generated/web3Api";
+export type ApiChain = web3Api_components["schemas"]["chainList"];
 export type ApiAddress = string;
-export type ApiParams = components["schemas"]["RunContractDto"]["params"];
+export type ApiParams = web3Api_components["schemas"]["RunContractDto"]["params"];
+export type MoralisTokenMetadata = web3Api_operations["getTokenMetadata"]["responses"]["200"]["content"]["application/json"];
 
+export class LocalizedString {
+  base = "";
+  lang = "";
 
-import { Moralis } from "moralis/types";
+  constructor(base: string, lang: string) {
+    this.base = base;
+    this.lang = lang;
+  }
 
-export type LocalizedString = {
-  base: string;
-  lang: string;
+  get length(): number {
+    return this.base.length + this.lang.length;
+  }
 }
 
 export function newLocalizedString(
   base: string,
   lang: string
 ): LocalizedString {
-  return {
-    base: base,
-    lang: lang,
-  };
+  return new LocalizedString("", "");
 }
-
-// export interface ContractParamsInterface {
-//   chain?: "eth" | "0x1" | "ropsten" | "0x3" | "rinkeby" | "0x4" | "goerli" | "0x5" | "kovan" | "0x2a" | "polygon" | "0x89" | "mumbai" | "0x13881" | "bsc" | "0x38" | "bsc testnet" | "0x61" | "avalanche" | "0xa86a" | string;
-//   function_name: string;
-// }
 
 export interface ApiContractParams {
   chain: ApiChain,
@@ -42,23 +42,10 @@ export interface ApiContractParams {
   params: ApiParams;
 }
 
-// export function makeParamsContract(
-//   function_name: string,
-//   params: Record<string, unknown>
-// ): ApiContractParams {
-//   return {
-//     chain: AppConfig.CHAIN,
-//     address: AppConfig.DPMI_ADDRESS,
-//     function_name: function_name,
-//     abi: ABI as unknown as AbiItem,
-//     params: params,
-//   };
-// }
-
 export function makeParamsContract(
   function_name: string,
   params: Record<string, unknown>
-): Moralis.ExecuteFunctionOptions {
+): MoralisTypes.ExecuteFunctionOptions {
   return {
     contractAddress: AppConfig.DPMI_ADDRESS,
     functionName: function_name,
@@ -71,6 +58,11 @@ export function uuid2uint128(uuid_input: string): ArrayLike<number> {
   return uuidParse(uuid_input)
 }
 
+export function uuid2bignum(uuid_input: string): BigNumber {
+  const hex = "0x"+uuid_input.replaceAll("-", "");
+  return BigNumber.from(hex);
+}
+
 export function bignum2uuid(input: BigNumber): string {
   const core = input.toHexString().substr(2, 32);
   const block1 = core.substr(0,   8);
@@ -81,13 +73,44 @@ export function bignum2uuid(input: BigNumber): string {
   return block1+"-"+block2+"-"+block3+"-"+block4+"-"+block5;
 }
 
+export function runContractFunctionPromise(moralis: typeof MoralisConfig, function_name: string, params: Record<string, unknown>): Promise<MoralisTypes.ExecuteFunctionCallResult> {
+  const full_params = {
+    contractAddress: AppConfig.DPMI_ADDRESS,
+    functionName: function_name,
+    abi: ABI as unknown as AbiItem,
+    params: params,
+  };
+  return moralis.executeFunction(full_params);
+}
+
+export async function runAnyContractFunction(moralis: typeof MoralisConfig, function_name: string, params: Record<string, unknown>): Promise<unknown> {
+  const result = await runContractFunctionPromise(moralis, function_name, params);
+  // console.log("runAnyContractFunction(function_name='"+function_name+"')", result);
+  return result;
+}
+
+// NOT WORKING!!!
+export async function runViewContractFunction(moralis: typeof MoralisConfig, function_name: string, params: Record<string, unknown>): Promise<unknown> {
+  const full_params = {
+    contractAddress: AppConfig.DPMI_ADDRESS,
+    function_name: function_name,
+    abi: ABI as unknown as AbiItem,
+    chain: AppConfig.CHAIN,
+    params: params,
+  };
+  console.log("runViewContractFunction", full_params);
+  const result = await moralis.Web3API.native.runContractFunction(full_params);
+  console.log("runViewContractFunction", result);
+  return result;
+}
+
 export async function mintToken(to: string, tokenId: string, uri: string, moralis: typeof MoralisConfig): Promise<string> {
   const params = makeParamsContract("safeMint", {
     to: to,
     tokenId: uuid2uint128(tokenId),
     uri: uri,
   });
-  const transaction = await moralis.executeFunction(params) as Moralis.ExecuteFunctionCallResult;
+  const transaction = await moralis.executeFunction(params) as MoralisTypes.ExecuteFunctionCallResult;
   console.log("mintToken->transaction", transaction);
   const result = await transaction.wait();
   console.log("mintToken->result", result);
@@ -98,7 +121,7 @@ export async function getTokenOwner(tokenId: string, moralis: typeof MoralisConf
   const params = makeParamsContract("ownerOf", {
     tokenId: uuid2uint128(tokenId)
   });
-  const result = await moralis.executeFunction(params) as Moralis.ExecuteFunctionCallResult;
+  const result = await moralis.executeFunction(params) as MoralisTypes.ExecuteFunctionCallResult;
   return result as unknown as string;
 }
 
@@ -108,7 +131,7 @@ export async function addCitation(from: string, to: string, moralis: typeof Mora
     toToken: uuid2uint128(to),
   });
 
-  const transaction = await moralis.executeFunction(params) as Moralis.ExecuteFunctionCallResult;
+  const transaction = await moralis.executeFunction(params) as MoralisTypes.ExecuteFunctionCallResult;
   console.log("addCitation->transaction", transaction);
   const result = await transaction.wait();
   console.log("addCitation->result", result);
@@ -120,7 +143,7 @@ export async function getCites(tokenId: string, moralis: typeof MoralisConfig): 
     tokenId: uuid2uint128(tokenId),
   });
 
-  const result = await moralis.executeFunction(params) as Moralis.ExecuteFunctionCallResult;
+  const result = await moralis.executeFunction(params) as MoralisTypes.ExecuteFunctionCallResult;
   const result2 = result as Array<BigNumber>;
   const result3 = result2.map(bignum2uuid);
   return result3 as Array<string>;
@@ -131,7 +154,7 @@ export async function getCitedBy(tokenId: string, moralis: typeof MoralisConfig)
     tokenId: uuid2uint128(tokenId),
   });
 
-  const result = await moralis.executeFunction(params) as Moralis.ExecuteFunctionCallResult;
+  const result = await moralis.executeFunction(params) as MoralisTypes.ExecuteFunctionCallResult;
   const result2 = result as Array<BigNumber>;
   const result3 = result2.map(bignum2uuid);
   return result3 as Array<string>;

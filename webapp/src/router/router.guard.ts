@@ -8,8 +8,22 @@ const CheckLogin = async () => {
   userModule.SET_USER(user);
 };
 
+const OptionalCheckLogin = async () => {
+  const user = await MoralisConfig.User.current();
+  if (user) userModule.SET_USER(user);
+};
+
 export default class RouterGuard {
   static async App(
+    _: unknown,
+    __: unknown,
+    next: NavigationGuardNext
+  ): Promise<void> {
+    await OptionalCheckLogin();
+    next();
+  }
+
+  static async RequiresLogin(
     _: unknown,
     __: unknown,
     next: NavigationGuardNext

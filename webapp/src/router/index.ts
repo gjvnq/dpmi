@@ -4,41 +4,44 @@ import DeployContract from "../views/DeployContract.vue";
 import Minting from "../views/Minting.vue";
 import TokenView from "../views/TokenView.vue";
 import Login from "../views/Login.vue";
-import ProtectedPages from "../components/ProtectedPages.vue";
+import CommonPages from "../components/CommonPages.vue";
 import RouterGuard from "./router.guard";
 
 const routes: Array<RouteRecordRaw> = [
   {
-    path: "/login",
-    name: "Login",
-    component: Login,
-    beforeEnter: RouterGuard.Login,
-  },
-  {
     path: "/",
-    name: "ProtectedPages",
-    component: ProtectedPages,
+    name: "DPMI",
+    component: CommonPages,
     beforeEnter: RouterGuard.App,
     children: [
       {
-        path: "/",
-        name: "TransactionList",
-        component: TransactionList,
-      },
-      {
-        path: "/deploy",
-        name: "DeployContract",
-        component: DeployContract,
-      },
-      {
-        path: "/mint",
-        name: "Minting",
-        component: Minting,
+        path: "/login",
+        name: "Login",
+        component: Login,
+        beforeEnter: RouterGuard.Login,
       },
       {
         path: "/token/:uuid",
         name: "Token",
         component: TokenView,
+      },
+      {
+        path: "/",
+        name: "TransactionList",
+        component: TransactionList,
+        beforeEnter: RouterGuard.RequiresLogin,
+      },
+      {
+        path: "/deploy",
+        name: "DeployContract",
+        component: DeployContract,
+        beforeEnter: RouterGuard.RequiresLogin,
+      },
+      {
+        path: "/mint",
+        name: "Minting",
+        component: Minting,
+        beforeEnter: RouterGuard.RequiresLogin,
       },
     ],
   },

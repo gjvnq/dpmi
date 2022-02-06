@@ -5,6 +5,7 @@
       <div class="col-sm-10">
         <template v-for="(line, i) in lines" :key="i">
           <single-localized-input
+            :input-type="inputType"
             v-model="lines[i]"
             @addLine="addLine"
             @change="update"
@@ -35,11 +36,13 @@ export default defineComponent({
   props: {
     disabled: Boolean,
     readonly: Boolean,
+    inputType: {
+      type: String,
+      default: "text"
+    },
     label: {
       type: String,
-      default(this: void) {
-        return "Label"
-      },
+      default: "Label",
     },
     modelValue: {
       type: Array,
