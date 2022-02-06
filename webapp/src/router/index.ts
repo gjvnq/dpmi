@@ -3,6 +3,7 @@ import TransactionList from "../views/TransactionList.vue";
 import DeployContract from "../views/DeployContract.vue";
 import Minting from "../views/Minting.vue";
 import TokenView from "../views/TokenView.vue";
+import HomePage from "../views/HomePage.vue";
 import Login from "../views/Login.vue";
 import CommonPages from "../components/CommonPages.vue";
 import RouterGuard from "./router.guard";
@@ -26,21 +27,9 @@ const routes: Array<RouteRecordRaw> = [
         component: TokenView,
       },
       {
-        path: "/",
-        name: "TransactionList",
-        component: TransactionList,
-        beforeEnter: RouterGuard.RequiresLogin,
-      },
-      {
-        path: "/deploy",
-        name: "DeployContract",
-        component: DeployContract,
-        beforeEnter: RouterGuard.RequiresLogin,
-      },
-      {
-        path: "/mint",
-        name: "Minting",
-        component: Minting,
+        path: "/me",
+        name: "HomePage", //shows owned tokens, etc.
+        component: HomePage,
         beforeEnter: RouterGuard.RequiresLogin,
       },
     ],

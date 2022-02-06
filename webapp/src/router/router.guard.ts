@@ -43,7 +43,7 @@ export default class RouterGuard {
   ): Promise<void> {
     try {
       await CheckLogin();
-      next("/");
+      next("/me");
     } catch (error) {
       next();
     }

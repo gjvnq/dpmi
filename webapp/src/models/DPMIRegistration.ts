@@ -2,7 +2,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { Moralis } from "moralis/types";
 import MoralisConfig from "../config/moralis";
 import { BigNumber } from "@ethersproject/bignumber";
-import { runViewContractFunction, runAnyContractFunction, runContractFunctionPromise } from '../utils';
+import { runAnyContractFunction, runContractFunctionPromise } from '../utils';
 import { LocalizedString } from '../utils';
 import { TokenId, NullTokenId } from "./TokenId";
 

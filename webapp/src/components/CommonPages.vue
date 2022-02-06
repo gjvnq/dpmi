@@ -10,20 +10,18 @@
         <div class="collapse navbar-collapse" id="navbarSupportedContent">
           <ul class="navbar-nav mr-auto">
             <li class="nav-item">
-              <a class="nav-link" href="/">Home</a>
+              <a class="nav-link" href="/me">Home</a>
             </li>
             <li class="nav-item">
-              <a class="nav-link" href="/mint">Mint</a>
-            </li>
-            <li class="nav-item dropdown">
-              <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                Advanced
-              </a>
-              <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
-                <li><a class="dropdown-item" href="/deploy">Deploy</a></li>
-              </ul>
+              <a class="nav-link" href="/token/new">Mint</a>
             </li>
           </ul>
+        </div>
+
+        <div class="d-flex" v-if="loggedIn">
+          <button class="btn btn-outline-danger" @click.prevent="logout">
+            Logout
+          </button>
         </div>
       </div>
     </nav>
@@ -46,6 +44,10 @@ export default class CommonPages extends Vue {
 
   get userId(): string {
     return this.user.id || "none";
+  }
+
+  get loggedIn(): boolean {
+    return this.user.id !== undefined;
   }
 
   async logout(): Promise<void> {

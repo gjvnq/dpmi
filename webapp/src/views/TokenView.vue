@@ -1,6 +1,9 @@
 <template>
   <div class="container">
-    <form action="#">
+    <form action="#" v-if="needsLogin">
+      <a href="/login">You need to log in to see this page.</a>
+    </form>
+    <form action="#" v-if="!needsLogin">
       <h3 v-if="isNew">New DPMI Record</h3>
       <h3 v-if="!isNew">DPMI Record</h3>
       <div class="row mb-3" v-if="!isNew">
@@ -117,7 +120,6 @@ import { defineComponent, Ref } from 'vue';
 import { UserModel } from "../models/User";
 import { DPMIRegistration, NullDPMIRegistration, DPMIMetadata } from "../models/DPMIRegistration";
 import { userModule } from "../store/user";
-import { makeParamsContract, uuid2uint128, getTokenOwner, addCitation, getCites, getCitedBy } from "../utils";
 import { Moralis } from "moralis/types";
 import UuidInput from "../components/UuidInput.vue";
 
@@ -158,6 +160,9 @@ export default defineComponent({
     },
     isNew(): boolean {
       return this.$route.params.uuid == "new";
+    },
+    needsLogin(): boolean {
+      return this.userEthAddress == "" && this.isNew;
     },
     user(): UserModel {
       return userModule.user as UserModel;
