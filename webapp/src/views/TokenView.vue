@@ -77,11 +77,11 @@
         </button>
       </div>
       <h4>Cites</h4>
-      <div class="row mb-3" _v-if="registration.fwd_citations.length > 0">
+      <div class="row mb-3" _v-if="fancy_fwd_citations.length > 0">
         <span class="col-sm-2"></span>
         <ul class="list-unstyled col-sm-10">
-          <template v-for="(addr, i) in registration.fwd_citations" :key="i">
-            <li><a :href="'/token/'+addr">{{addr}}</a></li>
+          <template v-for="(item, i) in fancy_fwd_citations" :key="i">
+            <li><a :href="'/token/'+item.uuid">{{item.toString()}}</a></li>
           </template>
         </ul>
       </div>
@@ -105,8 +105,8 @@
       <div class="row mb-3" _v-if="citedBy.length > 0">
         <span class="col-sm-2"></span>
         <ul class="list-unstyled col-sm-10">
-          <template v-for="(addr, i) in registration.rev_citations" :key="i">
-            <li><a :href="'/token/'+addr">{{addr}}</a></li>
+          <template v-for="(item, i) in fancy_rev_citations" :key="i">
+            <li><a :href="'/token/'+item.uuid">{{item.toString()}}</a></li>
           </template>
         </ul>
       </div>
@@ -123,7 +123,23 @@ import { userModule } from "../store/user";
 import { Moralis } from "moralis/types";
 import UuidInput from "../components/UuidInput.vue";
 
+import { TokenId } from "../models/TokenId";
 import { components } from "moralis/types/generated/web3Api";
+
+class ShortRegistration {
+  uuid: string;
+  title: string;
+  constructor(uuid: string, title: string) {
+    this.uuid = uuid;
+    this.title = title;
+  }
+  toString(): string {
+    if (this.title !== undefined && this.title.length > 0) {
+      return this.uuid + " - " + this.title;
+    }
+    return this.uuid;
+  }
+}
 
 export default defineComponent({
   data() {
@@ -132,11 +148,26 @@ export default defineComponent({
       registration: NullDPMIRegistration,
       processingChange: false,
       newCitesUuid: "" as string,
+      knownTitles: {} as Record<string, string>,
     }
   },
   computed: {
     regmd(): DPMIMetadata {
       return this.registration.metadata;
+    },
+    fancy_fwd_citations(): Array<ShortRegistration> {
+      const ans = [];
+      for (let item of this.registration.fwd_citations) {
+        ans.push(new ShortRegistration(item.uuid, this.knownTitles[item.uuid]));
+      }
+      return ans;
+    },
+    fancy_rev_citations(): Array<ShortRegistration> {
+      const ans = [];
+      for (let item of this.registration.rev_citations) {
+        ans.push(new ShortRegistration(item.uuid, this.knownTitles[item.uuid]));
+      }
+      return ans;
     },
     regmd_langs: {
       get(): string {
@@ -197,15 +228,41 @@ export default defineComponent({
       } finally {
         this.processingChange = false;
       }
+      this.loadTitles();
+    },
+    async loadTitles() {
+      const knownTitles = this.knownTitles;
+      for (let tokenId of this.registration.fwd_citations) {
+        DPMIRegistration.load_by_uuid(tokenId.uuid, true, this.$moralis).then((val) => {
+          if (val.metadata.dcTitle.length == 0) {return};
+          const title = val.metadata.dcTitle[0].base;
+          knownTitles[val.uuid] = title;
+        });
+      }
+      for (let tokenId of this.registration.rev_citations) {
+        DPMIRegistration.load_by_uuid(tokenId.uuid, true, this.$moralis).then((val) => {
+          if (val.metadata.dcTitle.length == 0) {return};
+          const title = val.metadata.dcTitle[0].base;
+          knownTitles[val.uuid] = title;
+        });
+      }
     },
     async addCites() {
+      const uuid = this.newCitesUuid.trim();
       try {
         this.processingChange = true;
-        await this.registration.addCitation(this.newCitesUuid.trim(), this.$moralis);
+        await this.registration.addCitation(uuid, this.$moralis);
         this.newCitesUuid = "";
       } finally {
         this.processingChange = false;
       }
+
+      const knownTitles = this.knownTitles;
+      DPMIRegistration.load_by_uuid(uuid, true, this.$moralis).then((val) => {
+        if (val.metadata.dcTitle.length == 0) {return};
+        const title = val.metadata.dcTitle[0].base;
+        knownTitles[val.uuid] = title;
+      });
     },
     async saveMetadata() {
       try {
