@@ -16,4 +16,7 @@ export class AppConfig {
   static DPMI_ADDRESS: string = env
     .get("VUE_APP_DPMI_ADDRESS")
     .asString() as string;
+  static LINK_ADDRESS: string = env
+    .get("VUE_APP_LINK_ADDRESS")
+    .asString() as string;
 }

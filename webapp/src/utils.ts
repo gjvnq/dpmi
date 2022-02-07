@@ -1,5 +1,6 @@
 import { AppConfig } from "./config";
-import ABI from "./assets/DPMIRegistry.abi.json";
+import DPMI_ABI from "./assets/DPMIRegistryRandom.abi.json";
+import LINK_ABI from "@chainlink/abi/v0.7/interfaces/LinkTokenInterface.json";
 import { parse as uuidParse, stringify as uuidStringify, NIL as NIL_UUID } from 'uuid';
 import { BigNumber } from "@ethersproject/bignumber";
 import MoralisConfig from "./config/moralis";
@@ -34,18 +35,40 @@ export function newLocalizedString(
   return new LocalizedString("", "");
 }
 
-export function runContractFunctionPromise(moralis: typeof MoralisConfig, function_name: string, params: Record<string, unknown>): Promise<MoralisTypes.ExecuteFunctionCallResult> {
-  const full_params = {
-    contractAddress: AppConfig.DPMI_ADDRESS,
-    functionName: function_name,
-    abi: ABI as unknown as AbiItem,
-    params: params,
-  };
-  return moralis.executeFunction(full_params);
+export class SmartContract {
+  addr: ApiAddress;
+  abi: AbiItem;
+
+  constructor(addr: ApiAddress, abi: AbiItem) {
+    this.addr = addr;
+    this.abi = abi;
+  }
+
+  runFunctionAsPromise(moralis: typeof MoralisConfig, function_name: string, params: Record<string, unknown>): Promise<MoralisTypes.ExecuteFunctionCallResult> {
+    const full_params = {
+      contractAddress: this.addr,
+      functionName: function_name,
+      abi: this.abi,
+      params: params,
+    };
+    console.log(full_params);
+    return moralis.executeFunction(full_params);
+  }
+
+  async runFunction(moralis: typeof MoralisConfig, function_name: string, params: Record<string, unknown>): Promise<unknown> {
+    const result = await this.runFunctionAsPromise(moralis, function_name, params);
+    return result;
+  }
+}
+
+export const DPMI_SmartContract = new SmartContract(AppConfig.DPMI_ADDRESS, DPMI_ABI as unknown as AbiItem);
+
+export const LINK_SmartContract = new SmartContract(AppConfig.LINK_ADDRESS, LINK_ABI as unknown as AbiItem);
+
+export function runContractFunctionPromise(moralis: typeof MoralisConfig, function_name: string, params: Record<string, unknown>, contractAddress?: ApiAddress): Promise<MoralisTypes.ExecuteFunctionCallResult> {
+  return DPMI_SmartContract.runFunctionAsPromise(moralis, function_name, params);
 }
 
 export async function runAnyContractFunction(moralis: typeof MoralisConfig, function_name: string, params: Record<string, unknown>): Promise<unknown> {
-  const result = await runContractFunctionPromise(moralis, function_name, params);
-  // console.log("runAnyContractFunction(function_name='"+function_name+"')", result);
-  return result;
+  return DPMI_SmartContract.runFunction(moralis, function_name, params);
 }

@@ -3,7 +3,7 @@ import { Moralis } from "moralis/types";
 import MoralisConfig from "../config/moralis";
 import { BigNumber } from "@ethersproject/bignumber";
 import { runAnyContractFunction, runContractFunctionPromise } from '../utils';
-import { LocalizedString } from '../utils';
+import { LocalizedString, DPMI_SmartContract, LINK_SmartContract } from '../utils';
 import { TokenId, NullTokenId } from "./TokenId";
 
 import { toRaw, isReactive } from 'vue';
@@ -211,14 +211,9 @@ export class DPMIRegistration {
 
     const isNew = this.id.bytes == NullTokenId.bytes;
     console.log("save_metadata:isNew", isNew);
-    console.log("save_metadata:isNew", this.id, NullTokenId);
-    console.log("save_metadata:isNew", this.id.bytes, NullTokenId.bytes);
-    console.log("save_metadata:isNew", this.id.toString(), NullTokenId.toString());
     if (isNew) {
       this._id = TokenId.parse(uuidv4());
     }
-    console.log("save_metadata", this._id);
-    console.log("save_metadata", this.uuid);
 
     const filename = this.uuid+".json";
     console.log("save_metadata", filename);
@@ -233,11 +228,22 @@ export class DPMIRegistration {
 
     let transaction;
     if (isNew) {
+      // Old way
       transaction = await runContractFunctionPromise(moralis, "safeMint", {
         to: this._owner,
         tokenId: this._id.wire,
         uri: new_metadata_url,
       }) as Moralis.ExecuteFunctionCallResult;
+
+      // New way I could not finish
+      // const fee = await DPMI_SmartContract.runFunction(moralis, "getLinkMintFee", {}) as Promise<BigNumber>;
+      // console.log("fee", fee);
+      // console.log({receiver: DPMI_SmartContract.addr, value: fee, data: new_metadata_url});
+      // const transaction_p = LINK_SmartContract.runFunctionAsPromise(moralis, "transferAndCall", {to: DPMI_SmartContract.addr, value: fee, data: new_metadata_url});// as Moralis.ExecuteFunctionCallResult;
+      // console.log("transaction_p", transaction_p);
+      // transaction = await transaction_p;
+      // console.log("transaction", transaction);
+      // console.log("transaction", transaction.prototype);
     } else {
       transaction = await runAnyContractFunction(moralis, "setTokenURI", {tokenId: this.id.wire, uri: new_metadata_url}) as Moralis.ExecuteFunctionCallResult;
     }

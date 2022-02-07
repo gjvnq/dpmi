@@ -8,6 +8,7 @@
     "lint": "vue-cli-service lint"
   },
   "dependencies": {
+    "@chainlink/abi": "^0.1.4",
     "@types/uuid": "^8.3.4",
     "core-js": "^3.6.5",
     "dotenv": "^10.0.0",

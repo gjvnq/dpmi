@@ -72,7 +72,6 @@ contract DPMIRegistry is
     fee = minting_fee;
   }
 
-  // TODO: auto generate UUID with chain link
   function safeMint(address to, uint256 tokenId, string memory uri)
     public
     payable
